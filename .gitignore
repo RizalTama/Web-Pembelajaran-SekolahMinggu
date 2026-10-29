@@ -1,0 +1,36 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Environment & local config (jangan pernah commit kredensial asli)
+.env
+.env.local
+.env.*.local
+config/*.local.php
+
+# Logs
+*.log
+error_log
+
+# Dependency manager (jika suatu saat memakai Composer/NPM)
+/vendor/
+/node_modules/
+
+# Dump database (berisi struktur & data asli, jangan ikut di-commit)
+/database/
+
+# File hasil upload pengguna (berisi data pribadi/nilai siswa asli)
+# Struktur folder tetap dipertahankan, isi file tidak ikut di-commit
+/uploads/foto/*
+/uploads/kegiatan/*
+/uploads/materi/*
+/uploads/rapor/*
+!/uploads/foto/index.html
+!/uploads/kegiatan/index.html
+!/uploads/materi/index.html
+!/uploads/rapor/index.html

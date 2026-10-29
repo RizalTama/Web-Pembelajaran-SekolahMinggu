@@ -1,0 +1,85 @@
+<?php
+require __DIR__ . '/../../config/database.php';
+require __DIR__ . '/../../config/app.php';
+require __DIR__ . '/../../includes/functions.php';
+require __DIR__ . '/../../includes/csrf.php';
+require __DIR__ . '/../../includes/auth.php';
+
+require_role('admin');
+
+$halaman = max(1, (int) ($_GET['halaman'] ?? 1));
+$per_halaman = 10;
+
+$total = (int) $pdo->query('SELECT COUNT(*) FROM pengumuman')->fetchColumn();
+$info = paginate_info($total, $halaman, $per_halaman);
+$offset = paginate_offset($info['halaman'], $per_halaman);
+
+$stmt = $pdo->prepare("SELECT * FROM pengumuman ORDER BY created_at DESC LIMIT {$per_halaman} OFFSET {$offset}");
+$stmt->execute();
+$daftar_pengumuman = $stmt->fetchAll();
+
+$page_title = 'Pengumuman';
+require __DIR__ . '/../../includes/header.php';
+?>
+
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <p class="text-sm text-muted">Kelola pengumuman untuk guru dan siswa.</p>
+  <a href="<?= e(BASE_URL) ?>/admin/pengumuman/tambah.php"
+     class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white rounded-xl px-4 py-2.5 font-semibold transition-colors shrink-0">
+    <i class="fa-solid fa-plus"></i> Tambah Pengumuman
+  </a>
+</div>
+
+<?php if (empty($daftar_pengumuman)): ?>
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center py-16 px-6">
+    <div class="w-16 h-16 rounded-full bg-primary-light text-primary flex items-center justify-center mb-4">
+      <i class="fa-solid fa-bullhorn text-2xl"></i>
+    </div>
+    <p class="text-ink font-semibold mb-1">Belum ada pengumuman</p>
+    <p class="text-sm text-muted mb-4">Buat pengumuman pertama untuk guru dan siswa.</p>
+    <a href="<?= e(BASE_URL) ?>/admin/pengumuman/tambah.php" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white rounded-xl px-4 py-2.5 font-semibold text-sm">
+      <i class="fa-solid fa-plus"></i> Tambah Pengumuman
+    </a>
+  </div>
+<?php else: ?>
+  <div class="space-y-4 mb-6">
+    <?php foreach ($daftar_pengumuman as $p): ?>
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <h3 class="font-bold text-ink"><?= e($p['judul']) ?></h3>
+          <div class="flex items-center gap-2 shrink-0">
+            <a href="<?= e(BASE_URL) ?>/admin/pengumuman/edit.php?id=<?= (int) $p['id'] ?>"
+               class="w-8 h-8 flex items-center justify-center rounded-lg text-primary hover:bg-primary-light" title="Edit">
+              <i class="fa-solid fa-pen"></i>
+            </a>
+            <form action="<?= e(BASE_URL) ?>/admin/pengumuman/hapus.php" method="POST" data-confirm="Pengumuman &quot;<?= e($p['judul']) ?>&quot; akan dihapus permanen." data-confirm-title="Hapus Pengumuman">
+              <?= csrf_field() ?>
+              <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
+              <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-lg text-danger hover:bg-danger/10" title="Hapus">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        <p class="text-sm text-muted whitespace-pre-line mb-2"><?= e($p['isi']) ?></p>
+        <p class="text-xs text-muted"><i class="fa-regular fa-clock mr-1"></i><?= format_tanggal($p['created_at']) ?></p>
+      </div>
+    <?php endforeach; ?>
+  </div>
+
+  <?php if ($info['total_halaman'] > 1): ?>
+    <div class="flex items-center justify-between px-1 text-sm">
+      <p class="text-muted">Halaman <?= $info['halaman'] ?> dari <?= $info['total_halaman'] ?> (<?= $info['total_data'] ?> data)</p>
+      <div class="flex gap-2">
+        <?php if ($info['halaman'] > 1): ?>
+          <a href="?halaman=<?= $info['halaman'] - 1 ?>" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-surface">Sebelumnya</a>
+        <?php endif; ?>
+        <?php if ($info['halaman'] < $info['total_halaman']): ?>
+          <a href="?halaman=<?= $info['halaman'] + 1 ?>" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-surface">Berikutnya</a>
+        <?php endif; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+<?php endif; ?>
+
+<?php require __DIR__ . '/../../includes/footer.php'; ?>
